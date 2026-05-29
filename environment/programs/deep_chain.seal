@@ -1,0 +1,18 @@
+def test_deep_include_preserves_first_appearance_order():
+    report = run_compiler()
+
+    permits = [item["name"] for item in report["permits"]]
+
+    assert permits.count("identify") == 1
+    assert permits.count("relay") == 1
+    assert permits.index("identify") < permits.index("relay")
+
+
+def test_inherited_policy_keeps_parent_order_before_child_rules():
+    child = policy_by_name(run_compiler(), "chain_child")
+
+    assert child["rules"] == [
+        "identify",
+        "log",
+        "enter",
+    ]

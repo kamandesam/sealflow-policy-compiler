@@ -1,3 +1,4 @@
+include deep_chain.seal
 # Sealflow access policy used by the verifier.
 permit badge = identify
 permit zone = enter

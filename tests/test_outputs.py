@@ -140,3 +140,10 @@ def test_json_schema_for_every_policy_and_permit():
     assert all(set(item) == {"name", "target"} for item in report["permits"])
     assert all(set(item) == {"name", "rules", "rule_count"} for item in report["policies"])
     assert all(policy["rule_count"] == len(policy["rules"]) for policy in report["policies"])
+
+def test_duplicate_include_is_reported_once_even_through_deep_chain():
+    issues = run_compiler()["issues"]
+
+    assert issues.count("DUPLICATE_INCLUDE:shared.seal") == 1
+    assert "INCLUDE_CYCLE:cycle.seal" in issues
+
