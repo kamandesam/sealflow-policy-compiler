@@ -147,3 +147,12 @@ def test_duplicate_include_is_reported_once_even_through_deep_chain():
     assert issues.count("DUPLICATE_INCLUDE:shared.seal") == 1
     assert "INCLUDE_CYCLE:cycle.seal" in issues
 
+
+def test_issue_list_is_sorted_by_first_detection_not_alphabetical():
+    issues = run_compiler()
+
+    issue_list = issues["issues"]
+
+    assert "DUPLICATE_PERMIT:badge" in issue_list
+    assert "CONFLICTING_PERMIT:badge" in issue_list
+    assert issue_list.index("DUPLICATE_PERMIT:badge") < issue_list.index("CONFLICTING_PERMIT:badge")
