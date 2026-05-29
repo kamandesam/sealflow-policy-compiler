@@ -64,3 +64,32 @@ permit relay = escort
 then a policy chain token `relay` expands to `identify`.
 
 If permit expansion encounters a cycle, skip that policy token and add one issue string `PERMIT_CYCLE:<permit>`, where `<permit>` is the original token used in the policy chain. Each cycle issue should appear at most once.
+
+## Include files
+
+A source file may contain include lines of the form:
+
+```text
+include "shared.seal"
+```
+
+Includes are relative to the directory of the file that contains the include statement. The compiler must process included files immediately at the point where the include appears. This means permits and policies from included files participate in the same global first-appearance ordering as permits and policies in the main file.
+
+If the same file is included more than once, process it only the first time and add one issue string `DUPLICATE_INCLUDE:<path>`, where `<path>` is the include text exactly as written without quotes.
+
+If includes form a cycle, skip the repeated include and add one issue string `INCLUDE_CYCLE:<path>`.
+
+## Policy inheritance
+
+A policy block may optionally extend a previously defined policy:
+
+```text
+policy after_hours extends base:
+  lock -> audit
+```
+
+The child policy's `rules` list must begin with the fully expanded rules from the parent policy, followed by the child policy's own expanded chain rules.
+
+If a policy extends a missing parent, still emit the child policy, use only the child rules, and add one issue string `UNKNOWN_PARENT:<child>:<parent>`.
+
+If policy inheritance forms a cycle, do not copy parent rules for the cyclic policy and add one issue string `POLICY_CYCLE:<policy>`.

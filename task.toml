@@ -4,8 +4,8 @@ author_email = "Marlenecarillo134@gmail.com"
 category = "Compilers, Parsers & Language Internals"
 tags = ["parser", "dsl", "compiler", "python", "validation"]
 difficulty = "medium"
-solution_explanation = "Repair the Sealflow compiler so it preserves source order, keeps first permit definitions, records duplicate and conflicting permit issues once, handles STOP as a chain terminator, expands permit indirection, detects permit cycles, skips unknown symbols, and writes a deterministic JSON report."
-verification_explanation = "The verifier runs the compiler on the bundled Sealflow script and checks JSON structure, permit ordering, duplicate and conflicting permit diagnostics, policy ordering, STOP behavior, transitive permit expansion, permit cycle detection, unknown-symbol handling, and exact expanded rule sequences."
+solution_explanation = "Repair the Sealflow compiler so it preserves source order, keeps first permit definitions, records duplicate and conflicting permit issues once, handles STOP as a chain terminator, expands permit indirection, detects permit cycles, processes include files, resolves policy inheritance, skips unknown symbols, and writes a deterministic JSON report."
+verification_explanation = "The verifier runs the compiler on the bundled Sealflow script and checks JSON structure, permit ordering, duplicate and conflicting permit diagnostics, policy ordering, STOP behavior, transitive permit expansion, permit cycle detection, include-file handling, policy inheritance, unknown-symbol handling, and exact expanded rule sequences."
 expert_time_estimate_hours = 1.5
 
 [task]

@@ -6,15 +6,17 @@ permit badge = identify
 permit review = inspect
 permit lock = secure
 permit audit = log
-permit escort = badge
-permit relay = escort
+
+include "shared.seal"
+include "shared.seal"
+include "cycle.seal"
+
+permit badge = reidentify
 permit loop_a = loop_b
 permit loop_b = loop_a
 
 policy morning:
   badge -> zone -> audit
-
-permit badge = reidentify
 
 policy night:
   review -> STOP -> zone -> audit
@@ -23,10 +25,16 @@ policy exception:
   badge -> GATE_9 -> lock -> audit
 
 policy relay_line:
-  relay -> audit
+  escort -> audit
 
 policy cyclic:
   loop_a -> zone
+
+policy after_hours extends base:
+  lock -> audit
+
+policy unknown_child extends missing_parent:
+  badge -> audit
 
 policy trace:
   audit -> badge -> review

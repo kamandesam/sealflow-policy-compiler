@@ -1,0 +1,10 @@
+# Shared permits and policies.
+permit visitor = badge
+permit escort = visitor
+permit vault = secure
+
+policy base:
+  badge -> audit
+
+policy inherited:
+  escort -> vault

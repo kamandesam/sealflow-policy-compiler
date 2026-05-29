@@ -1,0 +1,2 @@
+include "cycle.seal"
+permit cyclic_shared = audit

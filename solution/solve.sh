@@ -30,18 +30,29 @@ def _expand_permit(token, permits):
     return current
 
 
-def compile_text(text):
-    permits = {}
-    permit_order = []
-    policies = []
-    policy_lookup = {}
-    issues = []
-    seen_issues = set()
+def _parse_file(path, permits, permit_order, policies, policy_lookup, issues, seen_issues, included, stack):
+    path = Path(path).resolve()
+    if path in stack:
+        _add_issue(issues, seen_issues, f"INCLUDE_CYCLE:{path.name}")
+        return
+    if path in included:
+        _add_issue(issues, seen_issues, f"DUPLICATE_INCLUDE:{path.name}")
+        return
+
+    included.add(path)
+    stack.append(path)
     current_policy = None
 
-    for raw in text.splitlines():
+    for raw in path.read_text().splitlines():
         line = _clean(raw)
         if not line:
+            continue
+
+        if line.startswith("include "):
+            include_text = line[len("include "):].strip()
+            if include_text.startswith('"') and include_text.endswith('"'):
+                include_name = include_text[1:-1]
+                _parse_file(path.parent / include_name, permits, permit_order, policies, policy_lookup, issues, seen_issues, included, stack)
             continue
 
         if line.startswith("permit "):
@@ -62,8 +73,15 @@ def compile_text(text):
             continue
 
         if line.startswith("policy ") and line.endswith(":"):
-            name = line[len("policy "):-1].strip()
-            policy = {"name": name, "rules": []}
+            header = line[len("policy "):-1].strip()
+            parent = None
+            if " extends " in header:
+                name, parent = header.split(" extends ", 1)
+                name = name.strip()
+                parent = parent.strip()
+            else:
+                name = header
+            policy = {"name": name, "rules": [], "_parent": parent}
             policies.append(policy)
             policy_lookup[name] = policy
             current_policy = name
@@ -88,14 +106,63 @@ def compile_text(text):
                 else:
                     _add_issue(issues, seen_issues, f"UNKNOWN_SYMBOL:{token}")
 
+    stack.pop()
+
+
+def _resolve_policy_rules(name, policy_lookup, issues, seen_issues, stack=None):
+    if stack is None:
+        stack = []
+    if name not in policy_lookup:
+        return []
+    policy = policy_lookup[name]
+    parent = policy.get("_parent")
+    own = policy["rules"]
+
+    if not parent:
+        return list(own)
+
+    if name in stack:
+        _add_issue(issues, seen_issues, f"POLICY_CYCLE:{name}")
+        return list(own)
+
+    if parent not in policy_lookup:
+        _add_issue(issues, seen_issues, f"UNKNOWN_PARENT:{name}:{parent}")
+        return list(own)
+
+    if parent in stack:
+        _add_issue(issues, seen_issues, f"POLICY_CYCLE:{name}")
+        return list(own)
+
+    inherited = _resolve_policy_rules(parent, policy_lookup, issues, seen_issues, stack + [name])
+    return inherited + list(own)
+
+
+def compile_path(source):
+    permits = {}
+    permit_order = []
+    policies = []
+    policy_lookup = {}
+    issues = []
+    seen_issues = set()
+    included = set()
+
+    _parse_file(source, permits, permit_order, policies, policy_lookup, issues, seen_issues, included, [])
+
+    output_policies = []
     for policy in policies:
-        policy["rule_count"] = len(policy["rules"])
+        name = policy["name"]
+        rules = _resolve_policy_rules(name, policy_lookup, issues, seen_issues)
+        output_policies.append({"name": name, "rules": rules, "rule_count": len(rules)})
 
     return {
         "permits": [{"name": name, "target": permits[name]} for name in permit_order],
-        "policies": policies,
+        "policies": output_policies,
         "issues": issues,
     }
+
+
+def compile_text(text):
+    raise RuntimeError("compile_text is no longer used; call compile_path")
 
 
 def main(argv=None):
@@ -104,7 +171,7 @@ def main(argv=None):
     parser.add_argument("--out", default="/app/output/policy_report.json")
     args = parser.parse_args(argv)
 
-    report = compile_text(Path(args.source).read_text())
+    report = compile_path(args.source)
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(report, indent=2) + "\n")
