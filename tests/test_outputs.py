@@ -16,14 +16,7 @@ def run_compiler():
         else str(APP / "programs" / "access_shift.seal")
     )
     result = subprocess.run(
-        [
-            "python",
-            "-m",
-            "sealflow.compiler",
-            source,
-            "--out",
-            str(REPORT),
-        ],
+        ["python", "-m", "sealflow.compiler", source, "--out", str(REPORT)],
         cwd=APP,
         text=True,
         capture_output=True,
@@ -66,6 +59,10 @@ def test_permit_order_preserves_first_appearance():
         "audit",
         "review",
         "lock",
+        "escort",
+        "relay",
+        "loop_a",
+        "loop_b",
     ]
 
 
@@ -88,6 +85,8 @@ def test_policy_order_preserves_source_order():
         "morning",
         "night",
         "exception",
+        "relay_line",
+        "cyclic",
         "trace",
     ]
 
@@ -109,3 +108,23 @@ def test_unknown_symbol_issue_string_and_skip_behavior():
     exception = policy_by_name(report, "exception")
     assert exception["rules"] == ["identify", "secure", "log"]
     assert "UNKNOWN_SYMBOL:GATE_9" in report["issues"]
+
+
+def test_transitive_permit_expansion():
+    report = run_compiler()
+    relay_line = policy_by_name(report, "relay_line")
+    assert relay_line["rules"] == ["identify", "log"]
+    assert relay_line["rule_count"] == 2
+
+
+def test_permit_cycle_skips_original_token():
+    report = run_compiler()
+    cyclic = policy_by_name(report, "cyclic")
+    assert cyclic["rules"] == ["enter"]
+    assert cyclic["rule_count"] == 1
+
+
+def test_permit_cycle_issue_uses_original_policy_token():
+    report = run_compiler()
+    assert "PERMIT_CYCLE:loop_a" in report["issues"]
+    assert report["issues"].count("PERMIT_CYCLE:loop_a") == 1

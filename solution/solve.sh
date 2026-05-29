@@ -19,6 +19,17 @@ def _add_issue(issues, seen, issue):
         seen.add(issue)
 
 
+def _expand_permit(token, permits):
+    seen = set()
+    current = token
+    while current in permits:
+        if current in seen:
+            return None
+        seen.add(current)
+        current = permits[current]
+    return current
+
+
 def compile_text(text):
     permits = {}
     permit_order = []
@@ -65,7 +76,13 @@ def compile_text(text):
                     _add_issue(issues, seen_issues, f"POLICY_STOP:{current_policy}:{position}")
                     break
                 if token in permits:
-                    policy["rules"].append(permits[token])
+                    expanded = _expand_permit(token, permits)
+                    if expanded is None:
+                        _add_issue(issues, seen_issues, f"PERMIT_CYCLE:{token}")
+                    elif expanded.islower():
+                        policy["rules"].append(expanded)
+                    else:
+                        _add_issue(issues, seen_issues, f"UNKNOWN_SYMBOL:{expanded}")
                 elif token.islower():
                     policy["rules"].append(token)
                 else:

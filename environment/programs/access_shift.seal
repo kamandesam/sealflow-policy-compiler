@@ -6,6 +6,10 @@ permit badge = identify
 permit review = inspect
 permit lock = secure
 permit audit = log
+permit escort = badge
+permit relay = escort
+permit loop_a = loop_b
+permit loop_b = loop_a
 
 policy morning:
   badge -> zone -> audit
@@ -17,6 +21,12 @@ policy night:
 
 policy exception:
   badge -> GATE_9 -> lock -> audit
+
+policy relay_line:
+  relay -> audit
+
+policy cyclic:
+  loop_a -> zone
 
 policy trace:
   audit -> badge -> review

@@ -48,3 +48,19 @@ The `permits` value must be an array of objects. Each permit object must contain
 The `policies` value must be an array of objects. Each policy object must contain a `name` string, a `rules` array of strings, and a `rule_count` integer equal to the length of `rules`. The array order must match the first appearance of each policy block in the source file.
 
 The `issues` value must be an array of strings. Issue strings must appear at most once each and should be emitted in the order the issue is first encountered while reading the source file.
+
+## Permit indirection and cycles
+
+A permit target may itself name another permit. When a policy uses a permit, the compiler must expand permit targets transitively until it reaches a concrete lowercase rule name.
+
+For example, if the source contains:
+
+```text
+permit badge = identify
+permit escort = badge
+permit relay = escort
+```
+
+then a policy chain token `relay` expands to `identify`.
+
+If permit expansion encounters a cycle, skip that policy token and add one issue string `PERMIT_CYCLE:<permit>`, where `<permit>` is the original token used in the policy chain. Each cycle issue should appear at most once.
