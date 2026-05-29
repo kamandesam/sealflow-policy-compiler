@@ -17,3 +17,34 @@ Permit handling is strict. If a permit is declared more than once with the same 
 The literal token `STOP` means the policy chain stops at that point. The compiler should add `POLICY_STOP:<policy-name>:<position>` where the position is one-based within the original chain line, and it should ignore that `STOP` token and every later token on the same chain line. Unknown tokens that are not permits, not concrete lowercase rule names, and not `STOP` should add `UNKNOWN_SYMBOL:<token>` and be skipped.
 
 Keep the command-line interface intact. The verifier uses the system-wide Python runtime and does not require project-specific test tooling.
+
+## Required JSON schema
+
+The output file `/app/output/policy_report.json` must be a JSON object with exactly these top-level keys:
+
+```json
+{
+  "permits": [
+    {
+      "name": "badge",
+      "target": "identify"
+    }
+  ],
+  "policies": [
+    {
+      "name": "morning",
+      "rules": ["identify", "enter", "log"],
+      "rule_count": 3
+    }
+  ],
+  "issues": [
+    "DUPLICATE_PERMIT:badge"
+  ]
+}
+```
+
+The `permits` value must be an array of objects. Each permit object must contain `name` and `target` string fields. The array order must match the first appearance of each permit declaration in the source file.
+
+The `policies` value must be an array of objects. Each policy object must contain a `name` string, a `rules` array of strings, and a `rule_count` integer equal to the length of `rules`. The array order must match the first appearance of each policy block in the source file.
+
+The `issues` value must be an array of strings. Issue strings must appear at most once each and should be emitted in the order the issue is first encountered while reading the source file.
