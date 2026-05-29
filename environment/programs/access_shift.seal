@@ -1,0 +1,22 @@
+# Sealflow access policy used by the verifier.
+permit badge = identify
+permit zone = enter
+permit audit = log
+permit badge = identify
+permit review = inspect
+permit lock = secure
+permit audit = log
+
+policy morning:
+  badge -> zone -> audit
+
+permit badge = reidentify
+
+policy night:
+  review -> STOP -> zone -> audit
+
+policy exception:
+  badge -> GATE_9 -> lock -> audit
+
+policy trace:
+  audit -> badge -> review

@@ -1,0 +1,33 @@
+schema_version = "1.1"
+author_name = "Austin Blondale"
+author_email = "Marlenecarillo134@gmail.com"
+category = "Compilers, Parsers & Language Internals"
+tags = ["parser", "dsl", "compiler", "python", "validation"]
+difficulty = "medium"
+solution_explanation = "Repair the Sealflow compiler so it preserves source order, keeps first permit definitions, records duplicate and conflicting permit issues once, handles STOP as a chain terminator, skips unknown symbols, and writes a deterministic JSON report."
+verification_explanation = "The verifier runs the compiler on the bundled Sealflow script and checks JSON structure, permit ordering, duplicate and conflicting permit diagnostics, policy ordering, STOP behavior, unknown-symbol handling, and exact expanded rule sequences."
+expert_time_estimate_hours = 1.5
+
+[task]
+name = "kyu/sealflow-policy-compiler"
+description = "Repair a small DSL compiler for Sealflow policy scripts so it handles permits, source ordering, duplicate declarations, and STOP tokens correctly."
+authors = [{ name = "Austin Blondale", email = "Marlenecarillo134@gmail.com" }]
+keywords = ["parser", "dsl", "compiler", "python", "validation"]
+
+[metadata]
+category = "Compilers, Parsers & Language Internals"
+difficulty_explanation = "The visible failures require understanding parser semantics rather than hardcoding one output. Correctness depends on first-definition wins behavior, stable source ordering, exact diagnostic strings, and stopping a policy chain at STOP."
+
+[verifier]
+timeout_sec = 120.0
+
+[agent]
+timeout_sec = 900.0
+
+[environment]
+build_timeout_sec = 600.0
+os = "linux"
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240
+allow_internet = true
